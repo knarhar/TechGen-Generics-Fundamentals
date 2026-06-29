@@ -1,6 +1,4 @@
-﻿using static TechGen_Generics_Fundamentals.Program;
-
-namespace TechGen_Generics_Fundamentals
+﻿namespace TechGen_Generics_Fundamentals
 {
     internal class Program
     {
@@ -11,7 +9,6 @@ namespace TechGen_Generics_Fundamentals
         }
 
         #endregion Exercise 1
-
 
         #region Exercise 2
 
@@ -68,7 +65,7 @@ namespace TechGen_Generics_Fundamentals
             public void Initialize()
             {
                 IsInitialized = true;
-            }   
+            }
         }
 
         static T CreateAndInitialize<T>() where T : IInitializable, new()
@@ -79,6 +76,39 @@ namespace TechGen_Generics_Fundamentals
         }
 
         #endregion Exercise 3
+
+        #region Exercise 4
+
+        class Buffer<T>
+        {
+            int _capacity;
+            List<T> buffer;
+            Comparer<T> comparer;
+
+            public Buffer(int capacity, Comparer<T> comparer)
+            {
+                _capacity = capacity;
+                buffer = new List<T>(_capacity);
+                this.comparer = comparer;
+            }
+
+            public void Add(T item)
+            {
+                buffer.Add(item);
+                buffer.Sort((a, b) => comparer.Compare(b, a)); // descending sort
+                if (buffer.Count > _capacity)
+                {
+                    buffer.RemoveAt(buffer.Count - 1);
+                }
+            }
+
+            public T[] Snapshot()
+            {
+                return buffer.ToArray();
+            }
+        }
+
+        #endregion Exercise 4
 
         static void Main(string[] args)
         {
@@ -100,6 +130,23 @@ namespace TechGen_Generics_Fundamentals
             Console.WriteLine("After mutation:");
             string[] mutated = Project<int, string>(array2, (x) => $"N{x}");
             Print<string>(mutated);
+
+            // test case for Ex3
+            var instance = CreateAndInitialize<MyClass>();
+            Console.WriteLine(instance.IsInitialized);
+
+            // test case for Ex4
+            Buffer<int> buffer1 = new Buffer<int>(3, Comparer<int>.Default);
+            foreach (int n in new[] { 5, 1, 9, 3, 7, 2 })
+                buffer1.Add(n);
+            Console.WriteLine("N=2: " + string.Join(", ", buffer1.Snapshot()));
+
+            Buffer<int> buffer2 = new Buffer<int>(3, Comparer<int>.Default);
+            foreach (int n in new[] { 5, 1, 9, 3 })
+                buffer2.Add(n);
+            Console.WriteLine("N=3: " + string.Join(", ", buffer2.Snapshot()));
+            Console.WriteLine();
+
 
         }
     }
