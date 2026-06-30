@@ -13,7 +13,7 @@
         #region Exercise 2
 
         // helper function to print passed collections
-        static void Print<T>(T[] collection)
+        static void Print<T>(IEnumerable<T> collection)
         {
             foreach (T item in collection)
             {
@@ -23,31 +23,25 @@
             Console.WriteLine();
         }
 
-        public static T[] Filter<T>(T[] collection, Predicate<T> condition)
+        public static IEnumerable<T> Filter<T>(IEnumerable<T> collection, Predicate<T> condition)
         {
-            List<T> filteredList = new List<T>();
-
-            foreach (var item in collection)
+            foreach (T item in collection)
             {
                 if (condition(item))
                 {
-                    filteredList.Add(item);
+                    yield return item;
                 }
             }
-
-            return filteredList.ToArray();
         }
 
-        public static TOut[] Project<TIn, TOut>(TIn[] collection, Func<TIn, TOut> mutator)
+        public static IEnumerable<TOut> Project<TIn, TOut>(IEnumerable<TIn> collection, Func<TIn, TOut> mutator)
         {
             List<TOut> mutatedList = new List<TOut>();
 
-            for (int i = 0; i < collection.Length; i++)
+            foreach (var item in collection)
             {
-                mutatedList.Add(mutator(collection[i]));
+                yield return mutator(item);
             }
-
-            return mutatedList.ToArray();
         }
 
         #endregion Exercise 2
@@ -185,15 +179,15 @@
             Console.WriteLine();
 
             // test case for Ex2
-            int[] array = { 1, 2, 3, 4, 5, 6 };
+            var array = new [] { 1, 2, 3, 4, 5, 6 };
             Console.WriteLine("Before filtering:");
             Print<int>(array);
-            int[] array2 = Filter<int>(array, x => x % 2 == 0); //filter even values
+            var array2 = Filter<int>(array, x => x % 2 == 0).ToArray(); //filter even values
             Console.WriteLine("After filtering:");
             Print<int>(array2);
 
             Console.WriteLine("After mutation:");
-            string[] mutated = Project<int, string>(array2, (x) => $"N{x}");
+            var mutated = Project<int, string>(array2, (x) => $"N{x}");
             Print<string>(mutated);
 
             // test case for Ex3
