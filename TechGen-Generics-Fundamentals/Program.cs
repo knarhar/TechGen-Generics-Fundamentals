@@ -110,6 +110,71 @@
 
         #endregion Exercise 4
 
+        #region Exercise 5
+        public sealed class Result<T>
+        {
+            public bool Success { get; }
+            public T? Value { get; }
+            public Exception? Exception { get; }
+            public string? Error { get; }
+            public int Attempt { get; }
+
+            private Result(bool success, T? value, Exception? exception, int attempt)
+            {
+                Success = success;
+                Value = value;
+                Exception = exception;
+                Error = exception?.Message;
+                Attempt = attempt;
+            }
+
+            public static Result<T> Ok(T value, int attempt = 1)
+            {
+                return new Result<T>(true, value, null, attempt);
+            }
+
+            public static Result<T> Fail(Exception exception, int attempt)
+            {
+                return new Result<T>(false, default, exception, attempt);
+            }
+
+            public override string ToString()
+            {
+                return $"Success: {Success}\nValue: {Value}\nError: {Error}\nAttempts: {Attempt}\n";
+            }
+        }
+
+        public static Result<T> Execute<T>(
+            Func<T> operation, 
+            int maxAttempts, 
+            Func<Exception, bool>? shouldRetry = null
+        ) {
+            Exception? lastError = null;
+            int attempt = 0;
+
+            for (attempt = 1; attempt <= maxAttempts; attempt++)
+            {
+                try
+                {
+                    T value = operation();
+                    return Result<T>.Ok(value, attempt);
+                }
+                catch (Exception e)
+                {
+                    lastError = e;
+
+                    bool retry = shouldRetry?.Invoke(e) ?? true;
+                    if (!retry)
+                        break;
+                }
+            }
+
+            int finalAttempts = attempt > maxAttempts ? maxAttempts : attempt;
+            return Result<T>.Fail(lastError!, finalAttempts);
+        }
+
+        #endregion Exercise 5
+
         static void Main(string[] args)
         {
             // test cases for Ex1
@@ -136,7 +201,7 @@
             Console.WriteLine(instance.IsInitialized);
 
             // test case for Ex4
-            Buffer<int> buffer1 = new Buffer<int>(3, Comparer<int>.Default);
+            Buffer<int> buffer1 = new Buffer<int>(2, Comparer<int>.Default);
             foreach (int n in new[] { 5, 1, 9, 3, 7, 2 })
                 buffer1.Add(n);
             Console.WriteLine("N=2: " + string.Join(", ", buffer1.Snapshot()));
@@ -148,6 +213,15 @@
             Console.WriteLine();
 
 
+            // test case for Ex5
+            int counter1 = 0;
+            var result1 = Execute<int>(() =>
+            {
+                counter1++;
+                if (counter1 > 0) throw new Exception("fail");
+                return 42;
+            }, maxAttempts: 5, shouldRetry: ex => counter1 < 3);
+            Console.WriteLine(result1);
         }
     }
 }
